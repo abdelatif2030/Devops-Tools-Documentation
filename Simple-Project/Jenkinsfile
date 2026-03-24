@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        PROJECT_DIR = "/var/jenkins_home/workspace/Simple-Project" // inside Jenkins container
     }
 
     stages {
@@ -12,12 +13,11 @@ pipeline {
             }
         }
 
-        stage('Run Ansible on Host') {
+        stage('Run Ansible Playbook') {
             steps {
-                sh """
-                cd /home/ubuntu/Simple-Project/Simple-Project
-                ansible-playbook ansible-playbook.yml
-                """
+                dir("${PROJECT_DIR}") {
+                    sh 'ansible-playbook ansible-playbook.yml'
+                }
             }
         }
 
@@ -25,6 +25,18 @@ pipeline {
             steps {
                 sh 'docker ps'
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finished!'
+        }
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs!'
         }
     }
 }
