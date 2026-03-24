@@ -5,13 +5,6 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
     }
 
-    parameters {
-        string(name: 'DOCKER_IMAGE_NAME', defaultValue: 'abdo1997mohamed2030/comingsoon-page', description: 'Docker image name')
-        string(name: 'DOCKER_CONTAINER_NAME', defaultValue: 'web-container', description: 'Container name')
-        string(name: 'HOST_PORT', defaultValue: '5000', description: 'Host port for container')
-        string(name: 'CONTAINER_PORT', defaultValue: '80', description: 'Container port inside Docker')
-    }
-
     stages {
         stage('Docker Login') {
             steps {
@@ -19,17 +12,17 @@ pipeline {
             }
         }
 
-        stage('Build, Push & Deploy with Ansible') {
+        stage('Run Ansible Playbook on Host') {
             steps {
-                dir('Simple-Project') {
-                    sh """
-                    ansible-playbook ansible-playbook.yml \
-                    -e docker_image_name=${params.DOCKER_IMAGE_NAME} \
-                    -e docker_container_name=${params.DOCKER_CONTAINER_NAME} \
-                    -e docker_host_port=${params.HOST_PORT} \
-                    -e docker_container_port=${params.CONTAINER_PORT}
-                    """
-                }
+                // Use absolute path to your project folder on the EC2 host
+                sh """
+                cd /home/ubuntu/Simple-Project
+                ansible-playbook ansible-playbook.yml \
+                  -e docker_image_name=abdo1997mohamed2030/comingsoon-page \
+                  -e docker_container_name=web-container \
+                  -e docker_host_port=5000 \
+                  -e docker_container_port=80
+                """
             }
         }
 
