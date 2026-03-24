@@ -10,23 +10,32 @@
     docker_container_port: 80
 
   tasks:
-    - name: Stop current running container
-      command: docker stop {{ docker_container_name }}
+    - name: Stop running container if it exists
+      shell: |
+        if [ "$(docker ps -q -f name={{ docker_container_name }})" ]; then
+          docker stop {{ docker_container_name }}
+        fi
       ignore_errors: yes
 
-    - name: Remove stopped container
-      command: docker rm {{ docker_container_name }}
+    - name: Remove container if it exists
+      shell: |
+        if [ "$(docker ps -aq -f name={{ docker_container_name }})" ]; then
+          docker rm {{ docker_container_name }}
+        fi
       ignore_errors: yes
 
-    - name: Remove existing image
-      command: docker rmi {{ docker_image_name }}
+    - name: Remove image if it exists
+      shell: |
+        if [ "$(docker images -q {{ docker_image_name }})" ]; then
+          docker rmi {{ docker_image_name }}
+        fi
       ignore_errors: yes
 
     - name: Build Docker image
-      command: docker build -t {{ docker_image_name }} .
+      shell: docker build -t {{ docker_image_name }} .
 
     - name: Push image to Docker Hub
-      command: docker push {{ docker_image_name }}
+      shell: docker push {{ docker_image_name }}
 
-    - name: Run container
-      command: docker run -d --name {{ docker_container_name }} -p {{ docker_host_port }}:{{ docker_container_port }} {{ docker_image_name }}
+    - name: Run Docker container
+      shell: docker run -d --name {{ docker_container_name }} -p {{ docker_host_port }}:{{ docker_container_port }} {{ docker_image_name }}
