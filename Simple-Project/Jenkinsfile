@@ -12,16 +12,11 @@ pipeline {
             }
         }
 
-        stage('Run Ansible Playbook on Host') {
+        stage('Run Ansible on Host') {
             steps {
-                // Use absolute path to your project folder on the EC2 host
                 sh """
-                cd /home/ubuntu/Simple-Project
-                ansible-playbook ansible-playbook.yml \
-                  -e docker_image_name=abdo1997mohamed2030/comingsoon-page \
-                  -e docker_container_name=web-container \
-                  -e docker_host_port=5000 \
-                  -e docker_container_port=80
+                cd /home/ubuntu/Simple-Project/Simple-Project
+                ansible-playbook ansible-playbook.yml
                 """
             }
         }
