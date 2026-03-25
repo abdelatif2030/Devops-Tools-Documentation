@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         IMAGE_NAME = "abdo1997mohamed2030/comingsoon-page:latest"
-        APP_DIR = "DevOps-Pipeline-PHP/comingsoon"
+        APP_DIR = "DevOps-Pipeline-PHP/laravel-app/Dockerfile"
     }
 
     stages {
