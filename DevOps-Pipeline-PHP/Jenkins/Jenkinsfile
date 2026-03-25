@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    parameters {
+        booleanParam(name: 'SKIP_BUILD', defaultValue: false, description: 'Skip Docker image build')
+    }
+
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         IMAGE_NAME = "abdo1997mohamed2030/comingsoon-page:latest"
@@ -17,11 +21,12 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+            when {
+                expression { return !params.SKIP_BUILD }
+            }
             steps {
                 dir("${APP_DIR}") {
-                    sh """
-                        docker build -t ${IMAGE_NAME} .
-                    """
+                    sh "docker build -t ${IMAGE_NAME} ."
                 }
             }
         }
