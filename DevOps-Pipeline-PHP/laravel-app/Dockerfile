@@ -1,36 +1,33 @@
-# Pull php-apache image 
-FROM php:7.4.1-apache
+FROM php:8.2-apache
 
-# use root user
-USER root 
-
-# Set working directory to the apache public directory 
+# Set working directory
 WORKDIR /var/www/html
 
-# Copy all files into the apache public directory
-COPY . /var/www/html/
-
-# Install the dependecies to run php
+# Install system dependencies + clean cache لتقليل الحجم
 RUN apt-get update && apt-get install -y \
     libpng-dev \
-    zlib1g-dev \
-    libxml2-dev \
-    libzip-dev \ 
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libzip-dev \
     zip \
     curl \
     unzip \
-    && docker-php-ext-configure gd \
-    && docker-php-ext-install -j$(nproc) gd \
-    && docker-php-ext-install pdo_mysql \
-    && docker-php-ext-install mysqli \
-    && docker-php-ext-install zip \
-    && docker-php-source delete
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd pdo_mysql mysqli zip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
+# Copy project files
+COPY . .
 
-COPY ./vhost.conf /etc/apache2/sites-available/000-default.conf
+# Set correct permissions
+RUN chown -R www-data:www-data /var/www/html
 
-# Download php composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Enable Apache rewrite (مهم للـ Laravel)
+RUN a2enmod rewrite
 
-RUN chown -R www-data:www-data /var/www/html \
-    && a2enmod rewrite
+# Expose port
+EXPOSE 80
+
+# Start Apache
+CMD ["apache2-foreground"]
