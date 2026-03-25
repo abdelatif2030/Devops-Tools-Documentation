@@ -10,9 +10,15 @@ pipeline {
             steps {
                 script {
                     retry(3) { // Retry login up to 3 times if it fails
-                        sh '''
-                        echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                        '''
+                        def status = sh(
+                            script: 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin',
+                            returnStatus: true
+                        )
+                        if (status != 0) {
+                            echo "Docker login failed, retrying..."
+                            sleep 10
+                            error("Docker login failed")
+                        }
                     }
                 }
             }
@@ -87,6 +93,12 @@ pipeline {
                     '''
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finished. Check logs for errors."
         }
     }
 }
