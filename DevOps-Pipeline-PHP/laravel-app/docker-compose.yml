@@ -1,36 +1,13 @@
-version: '3.8'
+version: "3.9"
+
 services:
-  # Create the database service
-  db:
-    container_name: db
-    image: mysql:5.7
-    restart: always
-    environment:
-      MYSQL_DATABASE: 'laravel-db'
-      MYSQL_ALLOW_EMPTY_PASSWORD: 1
-      MYSQL_PASSWORD: ""
+  app:
+    image: abdo1997mohamed2030/comingsoon-page:latest
+    container_name: comingsoon-page
     ports:
-      - "3306:3306"
-
-  # Create the php-apache service
-  php-apache-environment:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    image: 'triple3a/laravel-app'
+      - "80:80"
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
     volumes:
-      - . /var/www/html/
-    ports:
-      - "5000:80"
-
-  # Create phpmyadmin service to view the database in the GUI
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    links:
-      - db
-    ports:
-      - 4000:80
-    environment:
-      MYSQL_USER: root
-      MYSQL_PASSWORD:
-      MYSQL_ROOT_PASSWORD:
+      - .:/var/www/html
