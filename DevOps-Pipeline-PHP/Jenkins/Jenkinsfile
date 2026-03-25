@@ -1,14 +1,14 @@
 pipeline {
     agent any
 
+    parameters {
+        booleanParam(name: 'SKIP_BUILD', defaultValue: false, description: 'Skip Docker image build')
+    }
+
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         IMAGE_NAME = "abdo1997mohamed2030/comingsoon-page:latest"
         APP_DIR = "DevOps-Pipeline-PHP/laravel-app"
-    }
-
-    parameters {
-        booleanParam(name: 'SKIP_BUILD', defaultValue: true, description: 'Skip Docker image build')
     }
 
     stages {
@@ -20,19 +20,27 @@ pipeline {
             }
         }
 
-        stage('Pull Docker Image') {
+        stage('Build Docker Image') {
             when {
-                expression { return params.SKIP_BUILD }
+                expression { return !params.SKIP_BUILD }
             }
             steps {
-                sh "docker pull ${IMAGE_NAME}"
+                dir("${APP_DIR}") {
+                    sh "docker build -t ${IMAGE_NAME} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh "docker push ${IMAGE_NAME}"
             }
         }
 
         stage('Run Docker Compose') {
             steps {
                 dir("${APP_DIR}") {
-                    sh "docker-compose up -d"
+                    sh "docker-compose up -d --build"
                 }
             }
         }
