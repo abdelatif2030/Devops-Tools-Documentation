@@ -9,7 +9,7 @@ pipeline {
         stage('Docker Login') {
             steps {
                 script {
-                    retry(3) { // Retry login up to 3 times if it fails
+                    retry(3) {
                         def status = sh(
                             script: 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin',
                             returnStatus: true
@@ -24,7 +24,7 @@ pipeline {
             }
         }
 
-        stage('Build & push Dockerfile') {
+        stage('Build & Push Docker Image') {
             steps {
                 sh '''
                 cd Kubernetes/comingsoon/
@@ -33,7 +33,7 @@ pipeline {
             }
         }
 
-        stage('Delete Cluster') {
+        stage('Delete Existing Cluster') {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
@@ -42,14 +42,15 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     sh '''
+                    echo "Deleting old cluster if exists..."
                     eksctl delete cluster --name comingsoon-cluster --region eu-north-1 || true
-                    sleep 180
+                    sleep 60
                     '''
                 }
             }
         }
 
-        stage('Create Cluster') {
+        stage('Create Cluster (t3.micro Free Tier)') {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
@@ -58,7 +59,14 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     sh '''
-                    eksctl create cluster --name comingsoon-cluster --region eu-north-1 --nodes-min=1
+                    eksctl create cluster \
+                        --name comingsoon-cluster \
+                        --region eu-north-1 \
+                        --nodes-min=1 \
+                        --nodes-max=1 \
+                        --node-type t3.micro \
+                        --timeout 30m || true
+
                     aws eks update-kubeconfig --name comingsoon-cluster
                     '''
                 }
@@ -67,31 +75,17 @@ pipeline {
 
         stage('Create Namespace') {
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "aws-credentials",
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
-                    sh 'kubectl create namespace comingsoon || true'
-                }
+                sh 'kubectl create namespace comingsoon || true'
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Application') {
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "aws-credentials",
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
-                    sh '''
-                    cd Kubernetes/comingsoon/k8s
-                    kubectl -n comingsoon apply -f deployment.yaml
-                    kubectl -n comingsoon apply -f services.yaml
-                    '''
-                }
+                sh '''
+                cd Kubernetes/comingsoon/k8s
+                kubectl -n comingsoon apply -f deployment.yaml
+                kubectl -n comingsoon apply -f services.yaml
+                '''
             }
         }
     }
@@ -99,6 +93,17 @@ pipeline {
     post {
         always {
             echo "Pipeline finished. Check logs for errors."
+        }
+        failure {
+            echo "Pipeline failed! Cleaning up cluster..."
+            withCredentials([[
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: "aws-credentials",
+                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+            ]]) {
+                sh 'eksctl delete cluster --name comingsoon-cluster --region eu-north-1 || true'
+            }
         }
     }
 }
