@@ -50,7 +50,7 @@ pipeline {
             }
         }
 
-        stage('Create Cluster (t3.micro Free Tier)') {
+        stage('Create Cluster (t3.micro)') {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
@@ -65,9 +65,9 @@ pipeline {
                         --nodes-min=1 \
                         --nodes-max=1 \
                         --node-type t3.micro \
-                        --timeout 30m || true
+                        --timeout 30m
 
-                    aws eks update-kubeconfig --name comingsoon-cluster
+                    aws eks update-kubeconfig --name comingsoon-cluster --region eu-north-1
                     '''
                 }
             }
@@ -75,17 +75,33 @@ pipeline {
 
         stage('Create Namespace') {
             steps {
-                sh 'kubectl create namespace comingsoon || true'
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "aws-credentials",
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                ]]) {
+                    sh '''
+                    kubectl create namespace comingsoon || true
+                    '''
+                }
             }
         }
 
         stage('Deploy Application') {
             steps {
-                sh '''
-                cd Kubernetes/comingsoon/k8s
-                kubectl -n comingsoon apply -f deployment.yaml
-                kubectl -n comingsoon apply -f services.yaml
-                '''
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "aws-credentials",
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                ]]) {
+                    sh '''
+                    cd Kubernetes/comingsoon/k8s
+                    kubectl -n comingsoon apply -f deployment.yaml
+                    kubectl -n comingsoon apply -f services.yaml
+                    '''
+                }
             }
         }
     }
