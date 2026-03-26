@@ -11,3 +11,23 @@ services:
       - APP_DEBUG=true
     volumes:
       - .:/var/www/html
+    command: >
+      bash -c "
+      chown -R www-data:www-data /var/www/html &&
+      chmod -R 755 /var/www/html &&
+      chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache &&
+      echo '<VirtualHost *:80>
+            ServerAdmin webmaster@localhost
+            DocumentRoot /var/www/html/public
+            <Directory /var/www/html/public>
+                Options Indexes FollowSymLinks
+                AllowOverride All
+                Require all granted
+            </Directory>
+            ErrorLog \${APACHE_LOG_DIR}/error.log
+            CustomLog \${APACHE_LOG_DIR}/access.log combined
+      </VirtualHost>' > /etc/apache2/sites-available/vhost.conf &&
+      a2ensite vhost.conf &&
+      a2enmod rewrite &&
+      apachectl -D FOREGROUND
+      "
