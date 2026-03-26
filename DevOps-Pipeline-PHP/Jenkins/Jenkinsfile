@@ -14,9 +14,9 @@ pipeline {
     stages {
         stage('Docker Login') {
             steps {
-                sh """
-                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                """
+                sh '''
+                    echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
+                '''
             }
         }
 
@@ -32,8 +32,17 @@ pipeline {
         stage('Run Docker Compose') {
             steps {
                 dir("${APP_DIR}") {
-                    sh "docker-compose up -d"
+                    sh '''
+                        docker compose down || true
+                        docker compose up -d
+                    '''
                 }
+            }
+        }
+
+        stage('Verify Running Containers') {
+            steps {
+                sh 'docker ps'
             }
         }
     }
@@ -41,7 +50,13 @@ pipeline {
     post {
         always {
             echo "Cleaning up dangling images..."
-            sh "docker image prune -f"
+            sh 'docker image prune -f'
+        }
+        success {
+            echo 'Deployment completed successfully!'
+        }
+        failure {
+            echo 'Deployment failed. Check the logs above.'
         }
     }
 }
