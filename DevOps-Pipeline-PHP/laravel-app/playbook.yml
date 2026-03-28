@@ -1,25 +1,22 @@
 ---
-- name: "Build Image and run container with ansible playbook"
+- name: "Build, tag and push Docker image"
   hosts: localhost
+  gather_facts: no
   tasks:
-  - name: stop running container
-    command: docker stop laravel-container
-    ignore_errors: yes
+    - name: Stop running container if exists
+      command: docker stop laravel-container
+      ignore_errors: yes
 
-  - name: remove stopped container
-    command: docker rm laravel-container
-    ignore_errors: yes
-# Make sure to change the image name with your personal dockerhub account and reposiroty   
-  - name: remove used image
-    command: docker rmi abdo1997.mohamed2030/laravel-app
-    ignore_errors: yes
-# Make sure to change the image name with your personal dockerhub account and reposiroty 
-  - name: build docker image from dockerfile
-    command: docker build -t abdo1997.mohamed2030/laravel-app .  
-# Make sure to change the image name with your personal dockerhub account and reposiroty 
-  - name: push image to dockerhub
-    command: docker push abdo1997.mohamed2030/laravel-app 
+    - name: Remove stopped container
+      command: docker rm laravel-container
+      ignore_errors: yes
 
+    - name: Remove old image if exists
+      command: docker rmi abdo1997.mohamed2030/laravel-app
+      ignore_errors: yes
 
+    - name: Build Docker image
+      command: docker build -t abdo1997.mohamed2030/laravel-app .
 
-  
+    - name: Push Docker image to DockerHub
+      command: docker push abdo1997.mohamed2030/laravel-app

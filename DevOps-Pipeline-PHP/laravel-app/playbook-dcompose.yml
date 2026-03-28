@@ -1,14 +1,14 @@
 ---
-- name: "Run Docker-Compose and Composer Update using Ansible"
+- name: "Run Docker Compose and Composer Update"
   hosts: localhost
   gather_facts: no
   vars:
-    php_container_name_pattern: "php-apache"  # part of the PHP container name
+    php_container_name_pattern: "php-apache"  # Part of container name
     max_retries: 10
     retry_delay: 3
   tasks:
 
-    - name: Stop and remove all containers (if exist)
+    - name: Stop and remove all containers if exist
       command: docker-compose down
       args:
         chdir: "{{ playbook_dir }}"
@@ -19,7 +19,7 @@
       ignore_errors: yes
 
     - name: Remove php-apache image (ignore if not exist)
-      command: docker rmi php:7.4.1-apache
+      command: docker rmi php:8.2-apache
       ignore_errors: yes
 
     - name: Remove MySQL image (ignore if not exist)
@@ -43,4 +43,4 @@
       until: php_container.stdout != ""
 
     - name: Run composer update inside PHP container
-      shell: docker exec -i {{ php_container.stdout }} sh -c "composer update"
+      shell: docker exec -i {{ php_container.stdout }} sh -c "composer install --no-interaction --optimize-autoloader"
