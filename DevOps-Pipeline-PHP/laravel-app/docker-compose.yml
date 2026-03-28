@@ -2,10 +2,12 @@ version: "3.9"
 
 services:
   php-apache:
-    image: abdo1997.mohamed2030/laravel-app:latest  # FULL IMAGE NAME
-    container_name: laravel-app_php-apache
+    image: abdo1997.mohamed2030/laravel-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - .:/var/www/html
     depends_on:
@@ -13,20 +15,21 @@ services:
 
   mysql:
     image: mysql:5.7
-    container_name: laravel-app_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: secret
       MYSQL_DATABASE: laravel
       MYSQL_USER: laravel
-      MYSQL_PASSWORD: laravel
+      MYSQL_PASSWORD: secret
     ports:
       - "3306:3306"
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: laravel-app_phpmyadmin
     environment:
       PMA_HOST: mysql
-      MYSQL_ROOT_PASSWORD: root
+      PMA_USER: root
+      PMA_PASSWORD: secret
     ports:
-      - "8080:80"
+      - "8081:80"
+    depends_on:
+      - mysql
