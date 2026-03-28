@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // username/password binding
         IMAGE_NAME = "abdo1997mohamed2030/comingsoon-page:latest"
         APP_DIR = "DevOps-Pipeline-PHP/laravel-app"
     }
@@ -20,12 +20,21 @@ pipeline {
             }
         }
 
-        stage('Pull Docker Image') {
-            when {
-                expression { return params.SKIP_BUILD }
-            }
+        stage('Pull or Build Docker Image') {
             steps {
-                sh "docker pull ${IMAGE_NAME}"
+                script {
+                    if (params.SKIP_BUILD) {
+                        echo "Pulling image from DockerHub..."
+                        sh "docker pull ${IMAGE_NAME}"
+                    } else {
+                        echo "Building Docker image..."
+                        dir("${APP_DIR}") {
+                            sh "docker build -t ${IMAGE_NAME} ."
+                        }
+                        echo "Pushing image to DockerHub..."
+                        sh "docker push ${IMAGE_NAME}"
+                    }
+                }
             }
         }
 
@@ -42,7 +51,10 @@ pipeline {
 
         stage('Verify Running Containers') {
             steps {
-                sh 'docker ps'
+                sh '''
+                    echo "Running containers:"
+                    docker ps
+                '''
             }
         }
     }

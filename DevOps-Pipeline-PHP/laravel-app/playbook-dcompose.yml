@@ -1,18 +1,20 @@
 ---
-- name: "Run Docker-Compose using Ansible playbook"
+- name: "Run Docker-Compose and Composer Update using Ansible"
   hosts: localhost
   gather_facts: no
   vars:
     php_container_name_pattern: "php-apache"  # part of the PHP container name
+    max_retries: 10
+    retry_delay: 3
   tasks:
 
-    - name: Stop and remove containers (if exist)
+    - name: Stop and remove all containers (if exist)
       command: docker-compose down
       args:
         chdir: "{{ playbook_dir }}"
       ignore_errors: yes
 
-    - name: Remove app image (ignore if not exist)
+    - name: Remove Laravel app image (ignore if not exist)
       command: docker rmi abdo1997.mohamed2030/laravel-app
       ignore_errors: yes
 
@@ -20,11 +22,11 @@
       command: docker rmi php:7.4.1-apache
       ignore_errors: yes
 
-    - name: Remove mysql image (ignore if not exist)
+    - name: Remove MySQL image (ignore if not exist)
       command: docker rmi mysql:5.7
       ignore_errors: yes
 
-    - name: Remove phpmyadmin image (ignore if not exist)
+    - name: Remove phpMyAdmin image (ignore if not exist)
       command: docker rmi phpmyadmin/phpmyadmin
       ignore_errors: yes
 
@@ -33,11 +35,11 @@
       args:
         chdir: "{{ playbook_dir }}"
 
-    - name: Wait for PHP container to appear
+    - name: Wait for PHP container to start
       shell: docker ps --filter "name={{ php_container_name_pattern }}" --format '{{.Names}}'
       register: php_container
-      retries: 10
-      delay: 3
+      retries: "{{ max_retries }}"
+      delay: "{{ retry_delay }}"
       until: php_container.stdout != ""
 
     - name: Run composer update inside PHP container
