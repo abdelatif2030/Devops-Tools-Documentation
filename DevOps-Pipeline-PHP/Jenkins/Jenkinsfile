@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub') // username/password binding
         IMAGE_NAME = "abdo1997mohamed2030/comingsoon-page:latest"
-        APP_DIR = "DevOps-Pipeline-PHP/laravel-app"
+        APP_DIR = "${WORKSPACE}/DevOps-Pipeline-PHP/laravel-app"
     }
 
     parameters {
@@ -42,7 +42,7 @@ pipeline {
             steps {
                 dir("${APP_DIR}") {
                     sh '''
-                        docker compose down || true
+                        docker compose down --remove-orphans || true
                         docker compose up -d
                     '''
                 }

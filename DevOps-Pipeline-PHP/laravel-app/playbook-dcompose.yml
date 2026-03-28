@@ -11,7 +11,7 @@
     - name: Stop and remove all containers if exist
       command: docker-compose down
       args:
-        chdir: "{{ playbook_dir }}"
+        chdir: "/home/jenkins/workspace/test-agent/DevOps-Pipeline-PHP/laravel-app"
       ignore_errors: yes
 
     - name: Remove Laravel app image (ignore if not exist)

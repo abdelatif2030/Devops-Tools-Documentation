@@ -2,8 +2,8 @@ version: "3.9"
 
 services:
   php-apache:
-    image: abdo1997.mohamed2030/laravel-app
-    container_name: laravel-app_php-apache-environment_1
+    image: abdo1997.mohamed2030/laravel-app:latest  # FULL IMAGE NAME
+    container_name: laravel-app_php-apache
     ports:
       - "80:80"
     volumes:
@@ -13,7 +13,7 @@ services:
 
   mysql:
     image: mysql:5.7
-    container_name: laravel-app_mysql-environment_1
+    container_name: laravel-app_mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: laravel
@@ -24,7 +24,7 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: laravel-app_phpmyadmin-environment_1
+    container_name: laravel-app_phpmyadmin
     environment:
       PMA_HOST: mysql
       MYSQL_ROOT_PASSWORD: root
